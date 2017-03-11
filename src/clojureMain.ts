@@ -2,7 +2,7 @@ import * as vscode from 'vscode';
 
 import { CLOJURE_MODE } from './clojureMode';
 import { ClojureCompletionItemProvider } from './clojureSuggest';
-import { clojureEval, clojureEvalAndShowResult, testNamespace, runAllTests } from './clojureEval';
+import { clojureEval, clojureEvalAndShowResult, testNamespace, runAllTests, clojureExecCurbside} from './clojureEval';
 import { ClojureDefinitionProvider } from './clojureDefinition';
 import { ClojureLanguageConfiguration } from './clojureConfiguration';
 import { ClojureHoverProvider } from './clojureHover';
@@ -30,7 +30,7 @@ export function activate(context: vscode.ExtensionContext) {
     vscode.commands.registerCommand('clojureVSCode.manuallyConnectToNRepl', cljConnection.manuallyConnect);
     vscode.commands.registerCommand('clojureVSCode.stopDisconnectNRepl', cljConnection.disconnect);
     vscode.commands.registerCommand('clojureVSCode.startNRepl', cljConnection.startNRepl);
-
+    vscode.commands.registerCommand('clojureVSCode.exec', () => { clojureExecCurbside(context) });
     const evaluationResultChannel = vscode.window.createOutputChannel('Evaluation results');
     vscode.commands.registerCommand('clojureVSCode.eval', () => clojureEval(evaluationResultChannel));
     vscode.commands.registerCommand('clojureVSCode.evalAndShowResult', () => clojureEvalAndShowResult(evaluationResultChannel));
@@ -45,7 +45,6 @@ export function activate(context: vscode.ExtensionContext) {
     context.subscriptions.push(vscode.languages.registerDefinitionProvider(CLOJURE_MODE, new ClojureDefinitionProvider()));
     context.subscriptions.push(vscode.languages.registerHoverProvider(CLOJURE_MODE, new ClojureHoverProvider()));
     context.subscriptions.push(vscode.languages.registerSignatureHelpProvider(CLOJURE_MODE, new ClojureSignatureProvider(), ' ', '\n'));
-
     vscode.workspace.registerTextDocumentContentProvider('jar', new JarContentProvider());
     vscode.languages.setLanguageConfiguration(CLOJURE_MODE.language, ClojureLanguageConfiguration);
 }

@@ -140,7 +140,6 @@ function evaluate(outputChannel: vscode.OutputChannel, showResults: boolean): vo
         vscode.window.showWarningMessage('You should connect to nREPL first to evaluate code.');
         return;
     }
-
     const editor = vscode.window.activeTextEditor;
 
     if (!editor) return;
@@ -215,4 +214,36 @@ function handleSuccess(outputChannel: vscode.OutputChannel, showResults: boolean
         });
     }
     nreplClient.close(respObjs[0].session);
+}
+
+export function clojureExecCurbside(context: vscode.ExtensionContext) {
+    let editor = vscode.window.activeTextEditor;
+    let text: string = editor.document.getText();
+    let ns: string;
+    let match = text.match(/^[\s\t]*\((?:[\s\t\n]*(?:in-){0,1}ns)[\s\t\n]+'?([\w.\-\/]+)[\s\S]*\)[\s\S]*/);
+    match ? ns = match[1] : ns = 'user';
+    let selection = editor.selection;
+    let isSelection = !selection.isEmpty;
+
+    if (isSelection) {
+        text = `(ns ${ns}) ${editor.document.getText(selection)}`;
+    }
+
+    let port = context.workspaceState.get < number > ('port');
+    let host = context.workspaceState.get < string > ('host');
+
+    if ((!port) || (!host)) {
+        vscode.window.showInformationMessage('You should connect to nREPL first to evaluate code.')
+        return;
+    }
+
+    let filename = editor.document.fileName;
+    let nrepl1 =  nreplClient;
+    nrepl1.evaluateFile(text, filename).then(() => {
+        nrepl1.evaluate("(curbside.api.runtime/stop!);").then(() => {
+            nrepl1.evaluate("(curbside.api.runtime/start!);").then(() => {
+                vscode.window.showInformationMessage('Reloaded curbside services!');
+            });
+        });
+    });
 }
